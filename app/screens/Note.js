@@ -1,12 +1,21 @@
 import SearchBar from '../components/SearchBar';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import {
+  Text,
+  View,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from 'react-native';
 import RoundIconButton from '../components/RoundIconButton';
 import NoteInputModal from '../components/NoteInputModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function Note({ user }) {
   const [greet, setGreet] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [notes, setNotes] = useState([]);
 
   const findGreet = () => {
     const hrs = new Date().getHours();
@@ -15,26 +24,46 @@ function Note({ user }) {
     setGreet('Evening');
   };
 
+  const findNotes = async () => {
+    const result = await AsyncStorage.getItem('notes');
+    console.log(result);
+    if (result !== null) setNotes(JSON.parse(result));
+  };
+
   useEffect(() => {
+    findNotes();
     findGreet();
   }, []);
+
+  const handleOnSubmit = async (title, desc) => {
+    const note = { id: Date.now(), title, desc, time: Date.now() };
+    const updatedNotes = [...notes, note];
+    setNotes(updatedNotes);
+    await AsyncStorage.setItem('notes', JSON.stringify(updatedNotes));
+  };
 
   return (
     <>
       <StatusBar barStyle={'dark-content'} />
-      <View style={styles.root}>
-        <Text style={styles.greet}>{`Good ${greet} ${user.name}`}</Text>
-        <SearchBar />
-        <View style={styles.addNotesContainer}>
-          <Text style={styles.addNotesText}>Add Notes</Text>
-          <RoundIconButton
-            iconName='plus'
-            style={styles.plusIcon}
-            onPress={() => console.log('opening model')}
-          />
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.root}>
+          <Text style={styles.greet}>{`Good ${greet} ${user.name}`}</Text>
+          <SearchBar />
+          <View style={styles.addNotesContainer}>
+            <Text style={styles.addNotesText}>Add Notes</Text>
+            <RoundIconButton
+              onPress={() => setModalVisible(true)}
+              iconName='plus'
+              style={styles.plusIcon}
+            />
+          </View>
         </View>
-      </View>
-      <NoteInputModal visible={true} />
+      </TouchableWithoutFeedback>
+      <NoteInputModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSubmit={handleOnSubmit}
+      />
     </>
   );
 }
@@ -45,6 +74,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     marginTop: 50,
+    zIndex: 1,
   },
   greet: {
     fontSize: 24,
@@ -65,5 +95,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     bottom: 50,
+    elevation: 0.2,
   },
 });
