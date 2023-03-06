@@ -4,13 +4,14 @@ import { AntDesign } from '@expo/vector-icons';
 
 function RoundIconButton({ iconName, color, size, style, onPress }) {
   return (
-    <AntDesign
-      name={iconName}
-      size={size || 24}
-      color={color || 'white'}
-      style={[styles.icon, { ...style }]}
-      onPress={onPress}
-    />
+    <View style={[styles.icon, { ...style }]}>
+      <AntDesign
+        name={iconName}
+        size={size || 24}
+        color={color || 'white'}
+        onPress={onPress}
+      />
+    </View>
   );
 }
 
